@@ -18,7 +18,7 @@
 
 | File | Role |
 | :--- | :--- |
-| **`relay_server.py`** | The "Master" server. Runs on port `8765`. |
+| **`relay_server.py`** | The "Master" server. Runs on port `8766`. |
 | **`padre_tracker.py`** | The "Fisherman". Captures data from Padre & pushes to Relay. |
 | **`client_dashboard.html`** | The "Screen". Shows live data in your browser. |
 | **`test_bot_receiver.py`** | Sample client showing how to consume the stream in Python. |
@@ -41,6 +41,7 @@ PADRE_TOKEN=your_token_here
 PADRE_UID=your_uid_here
 TARGET_USERNAMES=cz_binance
 FILTER_ONLY_TARGETS=false
+RELAY_PORT=8766
 ```
 
 ### 3. Execution Sequence
@@ -50,6 +51,7 @@ For the system to work, follow this order:
    ```powershell
    python relay_server.py
    ```
+> *Status: Listening on port 8766.*
 2. **Start Tracker** (New Terminal):
    ```powershell
    python padre_tracker.py
@@ -82,7 +84,7 @@ Each event sent via the relay has this structure:
 ### 🔴 Error: `10048 Address already in use`
 **Reason:** Another `relay_server.py` is already running.
 **Fix:** Close all Python terminals and restart. If it persists, run:
-`Stop-Process -Id (Get-NetTCPConnection -LocalPort 8765).OwningProcess -Force`
+`Stop-Process -Id (Get-NetTCPConnection -LocalPort 8766).OwningProcess -Force`
 
 ---
 **Verified by AI Engineer.** 🏁

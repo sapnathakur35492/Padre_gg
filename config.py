@@ -16,7 +16,9 @@ def get_env(key, required=True):
 
 PADRE_TOKEN = get_env("PADRE_TOKEN")
 PADRE_UID = get_env("PADRE_UID")
-RELAY_URL = os.getenv("RELAY_URL", "ws://localhost:8765")
+RELAY_HOST = os.getenv("RELAY_HOST", "127.0.0.1")
+RELAY_PORT = int(os.getenv("RELAY_PORT", "8765"))
+RELAY_URL = f"ws://{RELAY_HOST}:{RELAY_PORT}"
 TARGET_USERNAMES = [u.strip() for u in os.getenv("TARGET_USERNAMES", "").split(",") if u.strip()]
 FILTER_ONLY_TARGETS = os.getenv("FILTER_ONLY_TARGETS", "false").lower() == "true"
 PADRE_WS_URL = "wss://backend.padre.gg/_multiplex"

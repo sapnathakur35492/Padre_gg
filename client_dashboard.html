@@ -1,30 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Padre.gg Live Tracker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 20px; }
-        h1 { color: #00ff88; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        #status { font-weight: bold; margin-bottom: 20px; }
-        .connected { color: #00ff88; }
-        .disconnected { color: #ff5555; }
-        #events { display: flex; flex-direction: column-reverse; gap: 10px; }
-        .card { background-color: #1e1e1e; padding: 15px; border-radius: 8px; border-left: 5px solid #333; font-family: monospace; }
-        .card.target { border-left-color: #ffaa00; background-color: #2a2a20; }
-        .ts { color: #888; font-size: 0.9em; margin-bottom: 5px; }
-        .data { white-space: pre-wrap; word-wrap: break-word; }
-        .highlight { color: #ffaa00; font-weight: bold; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #00ff88;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        #status {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .connected {
+            color: #00ff88;
+        }
+
+        .disconnected {
+            color: #ff5555;
+        }
+
+        #events {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #333;
+            font-family: monospace;
+        }
+
+        .card.target {
+            border-left-color: #ffaa00;
+            background-color: #2a2a20;
+        }
+
+        .ts {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .data {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .highlight {
+            color: #ffaa00;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <h1>🚀 Padre.gg Live Relay</h1>
     <div id="status" class="disconnected">Status: Disconnected</div>
     <div id="events"></div>
 
     <script>
-        const wsUrl = "ws://localhost:8765";
+        const wsUrl = "ws://localhost:8766"; // Match RELAY_PORT in .env
         const eventsDiv = document.getElementById("events");
         const statusDiv = document.getElementById("status");
         let ws;
@@ -59,12 +110,12 @@
                 Unix: ${data.timestamp} ms
                 ${data.is_target_match ? '<span class="highlight"> [TARGET MATCH]</span>' : ''}
             </div>`;
-            
+
             html += `<div class="data">${JSON.stringify(data.event, null, 2)}</div>`;
             card.innerHTML = html;
-            
+
             eventsDiv.appendChild(card);
-            
+
             // Keep only last 50
             if (eventsDiv.children.length > 50) {
                 eventsDiv.lastChild.remove();
@@ -74,4 +125,5 @@
         connect();
     </script>
 </body>
+
 </html>

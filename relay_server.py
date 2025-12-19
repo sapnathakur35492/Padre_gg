@@ -3,13 +3,11 @@ import websockets
 import json
 import logging
 from colorama import Fore, Style, init
-
-# Initialize colors
-init(autoreset=True)
+import config
 
 # Configuration
-HOST = "localhost"
-PORT = 8765
+HOST = config.RELAY_HOST
+PORT = config.RELAY_PORT
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
