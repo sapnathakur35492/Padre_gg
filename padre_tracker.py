@@ -67,8 +67,8 @@ async def refresh_session():
 
 async def padre_tracker():
     """Main client loop."""
-    # Append ?desc=/tracker to match browser behavior and avoid 1008 Policy Violation
-    uri = f"{config.PADRE_WS_URL}?desc=%2Ftracker"
+    # Append ?desc=%2Ftrenches to match client behavior
+    uri = f"{config.PADRE_WS_URL}?desc=%2Ftrenches"
     relay_uri = config.RELAY_URL
     
     # Session setup
@@ -173,19 +173,23 @@ async def padre_tracker():
                         sub_id = state.req_id_counter
                         state.req_id_counter += 1
                         
-                        # The JS calls openConnection(id, path, listener)
-                        # openConnection sends [4, ...].
-                        # Let's verify type 4.
-                        # JS Code: this.send([4, e, t]) where e=connId, t=path.
-                        # So Subscription Request is [4, sub_id, path].
-                        
                         target_path = f"ws /tweet/subscribe-feed/v2/{uid}"
-                        print(f"{logger_prefix} Subscribing to: {target_path}")
+                        print(f"{logger_prefix} Subscribing to Personal Feed: {target_path}")
                         
                         sub_payload = [4, sub_id, target_path]
-                        # JSON encode
                         await ws.send(json.dumps(sub_payload))
                         state.subscriptions[sub_id] = "tweet_feed"
+
+                        # --- TRENCHES FEED SUBSCRIPTION (Added for Client Fix) ---
+                        sub_id_trenches = state.req_id_counter
+                        state.req_id_counter += 1
+                        trenches_path = "ws /tweet/trenches/v1" 
+                        print(f"{logger_prefix} Subscribing to Trenches Feed: {trenches_path}")
+                        
+                        sub_payload_trenches = [4, sub_id_trenches, trenches_path]
+                        await ws.send(json.dumps(sub_payload_trenches))
+                        state.subscriptions[sub_id_trenches] = "trenches_feed"
+                        # ---------------------------------------------------------
 
                 elif msg_type == 5:
                     # Data Message: [5, conn_id, payload]
