@@ -32,12 +32,41 @@ async def relay_handler(websocket):
     try:
         async for message in websocket:
             # We assume the message is already JSON formatted by the tracker
-            # If it comes from the tracker, we broadcast it to ALL other clients
-            # Ideally, we distinguish between 'tracker' source and 'bot' listener, 
-            # but for simplicity, we broadcast to all *others* or just all.
-            # Let's broadcast to all connected clients (including sender, useful for verify).
-            
-            # Use asyncio.gather to broadcast concurrently
+            # Filter logic
+            if config.FILTER_ONLY_TARGETS:
+                try:
+                    data = json.loads(message)
+                    # Expecting [5, sub_id, payload] or similar structure
+                    # Payload usually contains 'data' -> 'user' -> 'screen_name' or just 'user' -> 'screen_name'
+                    
+                    if isinstance(data, list) and len(data) >= 3 and data[0] == 5:
+                        payload = data[2]
+                        screen_name = None
+                        
+                        # Attempt to find screen_name in various common paths
+                        if isinstance(payload, dict):
+                            # Path 1: payload['user']['screen_name']
+                            if 'user' in payload and 'screen_name' in payload['user']:
+                                screen_name = payload['user']['screen_name']
+                            # Path 2: payload['data']['user']['screen_name']
+                            elif 'data' in payload and 'user' in payload['data'] and 'screen_name' in payload['data']['user']:
+                                screen_name = payload['data']['user']['screen_name']
+                        
+                        if screen_name:
+                            # Check against target list (case-insensitive)
+                            targets = [t.lower() for t in config.TARGET_USERNAMES]
+                            if screen_name.lower() not in targets:
+                                # logger.info(f"{Fore.LIGHTBLACK_EX}Filtered out message from @{screen_name}{Style.RESET_ALL}")
+                                continue # Skip broadcasting
+                            else:
+                                logger.info(f"{Fore.CYAN}[Filter] MATCH: Relaying tweet from @{screen_name}{Style.RESET_ALL}")
+                
+                except json.JSONDecodeError:
+                    pass
+                except Exception as e:
+                    logger.error(f"Error filtering message: {e}")
+
+            # Broadcast logic
             if connected_clients:
                 # logger.info(f"{Fore.CYAN}[>] Relaying message: {len(message)} bytes{Style.RESET_ALL}")
                 await asyncio.gather(
