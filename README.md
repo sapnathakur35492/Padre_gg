@@ -9,6 +9,7 @@
 - **Real-Time Tracking**: Direct `wss://` protocol integration (MsgPack/JSON hybrid).
 - **Target Tracking**: Specific account identification (e.g., `@cz_binance`).
 - **Data Enrichment**: Unix Millisecond timestamps + Human-readable time.
+- **24/7 Uptime**: **Automated Session Refresh** using Firebase tokens.
 - **Relay System**: Custom WebSocket server to broadcast data to any bot.
 - **Visual UI**: Chrome-based dashboard for instant monitoring.
 
@@ -37,11 +38,19 @@ pip install -r requirements.txt
 ### 2. Configure Credentials
 Open `.env` and update the following:
 ```ini
-PADRE_TOKEN=your_token_here
+PADRE_TOKEN=your_token_here (Optional now)
 PADRE_UID=your_uid_here
+
+# 24/7 Automation Credentials
+PADRE_REFRESH_TOKEN=AMf... (Found in IndexedDB)
+PADRE_API_KEY=AIza... (Found in IndexedDB)
+
+# Relay Configuration
+RELAY_HOST=0.0.0.0
+RELAY_PORT=8766
+
 TARGET_USERNAMES=cz_binance
 FILTER_ONLY_TARGETS=false
-RELAY_PORT=8766
 ```
 
 ### 3. Execution Sequence
@@ -78,8 +87,8 @@ Each event sent via the relay has this structure:
 ## ⚡ Troubleshooting (Must-Read)
 
 ### 🔴 Error: `1008 Policy Violation`
-**Reason:** Your Token has expired.
-**Fix:** Refesh Padre.gg in Chrome, get a new token from LocalStorage, and update it in `.env`. Restart `padre_tracker.py`.
+**Reason:** Token expired or not set.
+**Fix:** The system now **automatically refreshes** the token using `PADRE_REFRESH_TOKEN`. Ensure that variable is set correctly in `.env`.
 
 ### 🔴 Error: `10048 Address already in use`
 **Reason:** Another `relay_server.py` is already running.

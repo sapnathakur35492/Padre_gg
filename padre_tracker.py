@@ -5,8 +5,12 @@ import json
 import time
 import random
 import string
+import random
+import string
 import config
+import aiohttp # Added for Token Refresh
 from colorama import Fore, Style, init
+
 from dataclasses import dataclass
 
 init(autoreset=True)
@@ -30,6 +34,37 @@ def get_current_ts_ms():
     """Return current Unix timestamp in milliseconds."""
     return int(time.time() * 1000)
 
+async def refresh_session():
+    """
+    Uses the Refresh Token to get a new Access Token from Google Identity Toolkit.
+    Returns: new_access_token (str) or None if failed.
+    """
+    if not config.PADRE_REFRESH_TOKEN or not config.PADRE_API_KEY:
+        print(f"{Fore.YELLOW}[AutoRefresh] Missing Refresh Token or API Key. Manual update required.{Style.RESET_ALL}")
+        return None
+
+    url = f"https://securetoken.googleapis.com/v1/token?key={config.PADRE_API_KEY}"
+    payload = {
+        "grant_type": "refresh_token",
+        "refresh_token": config.PADRE_REFRESH_TOKEN
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=payload) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    new_token = data.get("access_token")
+                    print(f"{Fore.GREEN}[AutoRefresh] Successfully Refreshed Session Token! 🔄{Style.RESET_ALL}")
+                    return new_token
+                else:
+                    text = await resp.text()
+                    print(f"{Fore.RED}[AutoRefresh] Failed to refresh token. Status: {resp.status} Response: {text}{Style.RESET_ALL}")
+                    return None
+    except Exception as e:
+        print(f"{Fore.RED}[AutoRefresh] Exception during refresh: {e}{Style.RESET_ALL}")
+        return None
+
 async def padre_tracker():
     """Main client loop."""
     # Append ?desc=/tracker to match browser behavior and avoid 1008 Policy Violation
@@ -40,7 +75,15 @@ async def padre_tracker():
     token = config.PADRE_TOKEN
     uid = config.PADRE_UID
     session_id = get_session_id()
-    
+
+    # 24/7 Automation: Initial Token Check/Refresh
+    if not token and config.PADRE_REFRESH_TOKEN:
+        print(f"{logger_prefix} No initial token found. Attempting to generate one via Refresh Token...")
+        token = await refresh_session()
+        if not token:
+            print(f"{logger_prefix} {Fore.RED}Critical: Could not generate initial token. Exiting.{Style.RESET_ALL}")
+            return
+
     state = ConnectionState()
     
     logger_prefix = f"{Fore.MAGENTA}[PadreTracker]{Style.RESET_ALL}"
@@ -66,8 +109,18 @@ async def padre_tracker():
             relay_ws = await websockets.connect(relay_uri)
             print(f"{logger_prefix} {Fore.GREEN}Connected to Relay Server at {relay_uri}{Style.RESET_ALL}")
         except Exception as e:
-            print(f"{logger_prefix} {Fore.RED}Failed to connect to Relay Server: {e}{Style.RESET_ALL}")
-            print(f"{logger_prefix} Continuing without relay (local echo only).")
+            print(f"\n{logger_prefix} {Fore.RED}Connection Error: {e}{Style.RESET_ALL}")
+            print(f"{logger_prefix} Reconnecting in 5 seconds...")
+            
+            # 24/7 Logic: Before reconnecting, try to refresh the token 
+            # because the likely cause of a drop (after 1 hour) is expiration.
+            if config.PADRE_REFRESH_TOKEN:
+                 print(f"{logger_prefix} Attempting token refresh before reconnect...")
+                 new_t = await refresh_session()
+                 if new_t:
+                     token = new_t # Update the token for the next loop iteration
+            
+            await asyncio.sleep(5)
 
         async def send_heartbeat():
             """Send periodic heartbeat/checks if needed."""
@@ -112,8 +165,7 @@ async def padre_tracker():
                         state.req_id_counter += 1
                         
                         # The JS calls openConnection(id, path, listener)
-                        # openConnection sends [4, id, path]
-                        # Wait, openConnection sends [4, ...].
+                        # openConnection sends [4, ...].
                         # Let's verify type 4.
                         # JS Code: this.send([4, e, t]) where e=connId, t=path.
                         # So Subscription Request is [4, sub_id, path].
