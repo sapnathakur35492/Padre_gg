@@ -144,9 +144,18 @@ async def padre_tracker():
                 # Check message type
                 # Structure is typically [type, id, payload] or similar
                 if not isinstance(decoded, list):
+                    # DEBUG: Print non-list messages
+                    # print(f"{logger_prefix} {Fore.YELLOW}Received non-list message: {decoded}{Style.RESET_ALL}")
                     continue
                     
                 msg_type = decoded[0]
+                
+                # --- DEBUGGING LINE (Temporary) ---
+                print(f"{logger_prefix} [RAW DEBUG] Type: {msg_type} | Payload: {str(decoded)[:200]}...")
+                # ----------------------------------
+                
+                # DEBUG: Print ANY message type for diagnosis
+                # print(f"{logger_prefix} [DEBUG] Received Type: {msg_type} | Data: {str(decoded)[:100]}")
                 
                 # Type 4: Auth Response / System Message?
                 # Based on JS: if (4 !== e[0] && 1 !== e[0])... if (4) this.onAuth()
