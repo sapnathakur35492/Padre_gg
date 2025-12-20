@@ -151,7 +151,7 @@ async def padre_tracker():
                 msg_type = decoded[0]
                 
                 # --- DEBUGGING LINE (Temporary) ---
-                print(f"{logger_prefix} [RAW DEBUG] Type: {msg_type} | Payload: {str(decoded)[:200]}...")
+                # print(f"{logger_prefix} [RAW DEBUG] Type: {msg_type} | Payload: {str(decoded)[:200]}...")
                 # ----------------------------------
                 
                 # DEBUG: Print ANY message type for diagnosis
