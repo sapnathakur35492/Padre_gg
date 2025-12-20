@@ -6,8 +6,8 @@
 ---
 
 ## ✅ Deliverables Summary
-- **Real-Time Tracking**: Direct `wss://` protocol integration (MsgPack/JSON hybrid).
-- **Target Tracking**: Specific account identification (e.g., `@cz_binance`).
+- **Real-Time Tracking**: **Global "Trenches" Feed** (default) & Personal Feed.
+- **24/7 Uptime**: Automatic Token Refresh logic implemented.
 - **Data Enrichment**: Unix Millisecond timestamps + Human-readable time.
 - **24/7 Uptime**: **Automated Session Refresh** using Firebase tokens.
 - **Relay System**: Custom WebSocket server to broadcast data to any bot.
