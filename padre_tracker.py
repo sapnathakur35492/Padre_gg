@@ -67,7 +67,7 @@ async def refresh_session():
 
 async def padre_tracker():
     """Main client loop."""
-    # Append ?desc=%2Ftrenches to match client behavior
+    # Use trenches as it is the proven data source; keep personal sub active too
     uri = f"{config.PADRE_WS_URL}?desc=%2Ftrenches"
     relay_uri = config.RELAY_URL
     
