@@ -36,30 +36,43 @@ async def relay_handler(websocket):
             if config.FILTER_ONLY_TARGETS:
                 try:
                     data = json.loads(message)
-                    # Expecting [5, sub_id, payload] or similar structure
-                    # Payload usually contains 'data' -> 'user' -> 'screen_name' or just 'user' -> 'screen_name'
-                    
-                    if isinstance(data, list) and len(data) >= 3 and data[0] == 5:
-                        payload = data[2]
-                        screen_name = None
+                    # Expected format from tracker: {"event": payload, ...}
+                    # Payload for Type 5 is often [5, sub_id, payload_body]
+                    if isinstance(data, dict) and "event" in data:
+                        payload = data["event"]
                         
-                        # Attempt to find screen_name in various common paths
-                        if isinstance(payload, dict):
-                            # Path 1: payload['user']['screen_name']
-                            if 'user' in payload and 'screen_name' in payload['user']:
-                                screen_name = payload['user']['screen_name']
-                            # Path 2: payload['data']['user']['screen_name']
-                            elif 'data' in payload and 'user' in payload['data'] and 'screen_name' in payload['data']['user']:
-                                screen_name = payload['data']['user']['screen_name']
-                        
-                        if screen_name:
-                            # Check against target list (case-insensitive)
+                        if isinstance(payload, list) and len(payload) >= 3 and payload[0] == 5:
+                            body = payload[2]
+                            
+                            # Handle batch tweets structure: {"tweets": [...]}
+                            tweets_to_check = []
+                            if isinstance(body, dict):
+                                if "tweets" in body and isinstance(body["tweets"], list):
+                                    tweets_to_check = body["tweets"]
+                                else:
+                                    tweets_to_check = [body]
+                            
+                            is_match = False
                             targets = [t.lower() for t in config.TARGET_USERNAMES]
-                            if screen_name.lower() not in targets:
-                                # logger.info(f"{Fore.LIGHTBLACK_EX}Filtered out message from @{screen_name}{Style.RESET_ALL}")
-                                continue # Skip broadcasting
-                            else:
-                                logger.info(f"{Fore.CYAN}[Filter] MATCH: Relaying tweet from @{screen_name}{Style.RESET_ALL}")
+                            
+                            for tweet in tweets_to_check:
+                                screen_name = None
+                                if isinstance(tweet, dict):
+                                    # Try various paths for the username
+                                    user_obj = tweet.get("user") or tweet.get("data", {}).get("user")
+                                    if user_obj and isinstance(user_obj, dict):
+                                        screen_name = user_obj.get("screen_name") or user_obj.get("username")
+                                    
+                                    if not screen_name:
+                                        screen_name = tweet.get("screen_name") or tweet.get("username")
+                                
+                                if screen_name and screen_name.lower() in targets:
+                                    logger.info(f"{Fore.CYAN}[Filter] MATCH: Relaying tweet from @{screen_name}{Style.RESET_ALL}")
+                                    is_match = True
+                                    break
+                            
+                            if not is_match:
+                                continue # Skip broadcasting if no tweet matches targets
                 
                 except json.JSONDecodeError:
                     pass
