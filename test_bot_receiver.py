@@ -7,7 +7,9 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 async def test_bot():
-    uri = config.RELAY_URL
+    # On server side '0.0.0.0' is fine, but client must connect to '127.0.0.1' or actual IP
+    target_host = "127.0.0.1" if config.RELAY_HOST == "0.0.0.0" else config.RELAY_HOST
+    uri = f"ws://{target_host}:{config.RELAY_PORT}"
     print(f"{Fore.YELLOW}[BOT] Connecting to Relay Server at {uri}...{Style.RESET_ALL}")
     
     try:
